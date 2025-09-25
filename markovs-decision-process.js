@@ -2,7 +2,7 @@
 
 const CELL_VALUES = {
     OBSTACLE: "obstacle",
-    EMPTY: false,
+    EMPTY: "empty",
     START: "start",
     END: "end",
     PATH: "path",
@@ -19,8 +19,8 @@ let contrast; // controls the brightness/darkness of gradient display
 let globalValues = []; // 2D array storing the value of each cell for the gradient mainly
 
 let grid = []; // the main grid
-let start; // starting position
-let goal; // goal position
+let start = null; // starting position
+let goal = null; // goal position
 let rivals = []; // obstacles are in this array
 
 let selectedMode = ""; // current drawing mode
@@ -42,8 +42,10 @@ document.getElementById("contrast").addEventListener("input", updateValues);
 window.onload = function () {
 
     updateValues(); // we update with the existing placeholder values
-    grid[1][1] = CELL_VALUES.START; // we put a start node
-    grid[rows - 2][columns - 2] = CELL_VALUES.END; // we put an end node
+    grid[1][1] = CELL_VALUES.START;
+    start = [1,1];// we put a start node
+    grid[rows - 2][columns - 2] = CELL_VALUES.END;
+    goal = [rows - 2][columns - 2]; // we put an end node
     generateGrid(); // we generate the grid
 };
 
@@ -155,10 +157,7 @@ function paintCell(event) { // function to paint the cells
             cell.classList.add(CELL_VALUES.OBSTACLE);
             grid[row][col] = CELL_VALUES.OBSTACLE;
         }
-    } else if (selectedMode === CELL_VALUES.GRADIENT) {
-
-    }
-    else if (selectedMode === CELL_VALUES.START) {
+    }  else if (selectedMode === CELL_VALUES.START) {
 
         let index = indexElement(grid, CELL_VALUES.START);
 
@@ -413,6 +412,8 @@ function colorPath(policies) {
         for (let j = 0; j < columns; j++) {
             if (grid[i][j] === CELL_VALUES.PATH) {
                 grid[i][j] = CELL_VALUES.EMPTY;  // clear all existing paths
+                const oldCell = gridContainer.querySelector(`.cell[data-row="${i}"][data-col="${j}"]`);
+                if (oldCell) oldCell.classList.remove("path");
             }
         }
     }
@@ -446,12 +447,13 @@ function colorPath(policies) {
         }
         const selector = `.cell[data-row="${currentRow}"][data-col="${currentCol}"]`;
         const cell = gridContainer.querySelector(selector);
-        if (cell) {
+        if (cell && !cell.classList.contains("obstacle")) {
             cell.classList.add("path"); // add the "path" class to the current cell
         }
     }
+    if (grid[currentRow][currentCol] !== CELL_VALUES.OBSTACLE)
+        grid[currentRow][currentCol] = CELL_VALUES.END; // make sure the last cell is marked as the goal
 
-    grid[currentRow][currentCol] = CELL_VALUES.END; // make sure the last cell is marked as the goal
 }
 
 function compressMatrixTo255(matrix) { // linear compression algorithm for turning the negative values instead to values 0-255
