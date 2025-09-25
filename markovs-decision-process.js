@@ -2,7 +2,7 @@
 
 const CELL_VALUES = {
     OBSTACLE: "obstacle",
-    EMPTY: "empty",
+    EMPTY: false,
     START: "start",
     END: "end",
     PATH: "path",
@@ -37,8 +37,6 @@ document.getElementById("powerCost").addEventListener("input", updateValues);
 document.getElementById("repairCost").addEventListener("input", updateValues);
 document.getElementById("discount").addEventListener("input", updateValues);
 document.getElementById("contrast").addEventListener("input", updateValues);
-document.addEventListener("mouseup", () => {isMouseDown = false; }); // when the mouse is released, we reset the isMouseDown bool to false
-
 
 // initial grid
 window.onload = function () {
@@ -79,7 +77,7 @@ function generateGrid() { // generates the initial grid
     const oldGrid = grid; // we take the old grid, so we can paint cells on it
     gridContainer.innerHTML = ""; // we clear the old board
 
-    grid = new Array(rows).fill(0).map(() => new Array(columns).fill(false)); // change false with some other state of choosing
+    grid = new Array(rows).fill(0).map(() => new Array(columns).fill(CELL_VALUES.EMPTY)); // change false with some other state of choosing
 
     for (let i = 0; i < rows; i++) {
 
@@ -125,15 +123,6 @@ function selectMode(mode) { // used mainly to change UI, to see which mode is se
     selectedMode = mode; // set the selected mode from the html
     const drawModeButtons = document.querySelectorAll(".button.draw-mode"); // grabs all the buttons with these classes
 
-    if (selectedMode === CELL_VALUES.EMPTY){ // clears the grid
-        grid = [];
-        rivals = [];
-        start = null;
-        goal = null;
-        generateGrid();
-        selectedMode = "";
-    }
-
     drawModeButtons.forEach((drawModeButton) => {
         if (drawModeButton.value === selectedMode) {
             drawModeButton.classList.add("selected"); // adds the selected class used for coloring if selected
@@ -158,11 +147,11 @@ function paintCell(event) { // function to paint the cells
 
         if (cell.classList.contains(CELL_VALUES.OBSTACLE)) {
             // if already an obstacle, remove it
-            cell.classList = "cell";
+            cell.className = "cell";
             grid[row][col] = CELL_VALUES.EMPTY;
         } else {
             // otherwise, add obstacle
-            cell.classList = "cell";
+            cell.className = "cell";
             cell.classList.add(CELL_VALUES.OBSTACLE);
             grid[row][col] = CELL_VALUES.OBSTACLE;
         }
@@ -175,7 +164,7 @@ function paintCell(event) { // function to paint the cells
 
         clearDuplicated(index, CELL_VALUES.START);
 
-        cell.classList = "cell";
+        cell.className = "cell";
         cell.classList.add(CELL_VALUES.START); // set new start node so the css can modify it
         grid[row][col] = CELL_VALUES.START; // update the grid model, so it knows the cell is a start node
 
@@ -184,7 +173,7 @@ function paintCell(event) { // function to paint the cells
 
         clearDuplicated(index, CELL_VALUES.END);
 
-        cell.classList = "cell";
+        cell.className = "cell";
         cell.classList.add(CELL_VALUES.END); // set new goal node so the css can modify it
         grid[row][col] = CELL_VALUES.END; // update the grid model, so it knows the cell is a goal node
 
@@ -196,8 +185,8 @@ function clearDuplicated(index, type) {
     if (index) {
         const selector = `.cell[data-row="${index["i"]}"][data-col="${index["j"]}"]`;
         const oldCell = document.querySelector(selector);
-        oldCell.classList = "cell";
-        grid[index["i"]][index["j"]] = null;
+        oldCell.className = "cell";
+        grid[index["i"]][index["j"]] = CELL_VALUES.EMPTY;
     }
 }
 
@@ -529,4 +518,15 @@ function toggleGradient() { // gave up explaining this
         }
     }
     gradientActive = !gradientActive;
+}
+
+function clearGrid() {
+    // reset model
+    grid = new Array(rows).fill(0).map(() => new Array(columns).fill(CELL_VALUES.EMPTY));
+    rivals = [];
+    start = null;
+    goal = null;
+    lastCompressedValues = [];
+    gradientActive = false;
+    generateGrid();   // update UI
 }
