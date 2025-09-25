@@ -1,0 +1,150 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #2f3e63;
+    color: #333333;
+}
+
+.container {
+    display: flex;
+    height: 100%;
+}
+
+.grid-container {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 15px;
+}
+
+#input-container {
+    width: 250px;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    margin: 20px;
+}
+
+.row {
+    display: flex;
+    width: 100%;
+}
+
+.button {
+    width: 100%;
+    padding: 10px;
+    margin: 5px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: #2980b9
+}
+
+.button.selected {
+    background-color: #1f618d;
+}
+
+.cell {
+    flex: 1;
+    border: 1px solid #000;
+    box-sizing: border-box;
+    background-color: #e6e2e2; /* background color for better visibility */
+}
+
+.no-border .cell {
+    border: none;
+}
+
+.cell.obstacle {
+    background-color: #000;
+
+}
+
+.cell.path {
+    background-color: rgba(100, 220, 252, 0.58);
+}
+
+.cell.start {
+    background-color: green;
+}
+
+.cell.end {
+    background-color: red;
+}
+
+.cell.path-color {
+    background-color: #4caf9e;
+}
+
+.cell.gradient {
+
+}
+
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5); /* dark transparent background */
+}
+
+/* Modal content box */
+.modal-content {
+    background-color: #fff;
+    margin-top: 5%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+
+}
+
+/* close button */
+.closeBtn {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+}
+.closeBtn:hover {
+    color: red;
+}
+
+a {
+color: #4a90e2;
+}
+
+a:hover{
+    color: #357ab8;
+    cursor: pointer;
+}
+
+a:active{
+    color: #2a5d8f;
+}
+
+a:visited {
+color: #7bb3f0;
+}
+
+a:hover {
+             /* show pointer */
+}
+
+label {
+    color: #ccc8c8;
+}

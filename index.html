@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pathfinder</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="container">
+    <div class="grid-container"></div>
+    <div id="input-container">
+        <div id="infoModal" class="modal">
+            <div class="modal-content">
+                <span class="closeBtn">&times;</span>
+                <h2 style="text-align: center">How It Works</h2>
+                <hr/>
+                <p>Start / Goal: Click to place. Cannot have more than one node each.</p>
+                <p>Wall: Click or drag to block paths with an obstacle.</p>
+                <p>Delivery Reward: Reward for reaching the goal. </p>
+                <p>Power Cost: Energy your drone spends moving.</p>
+                <p>Repair Cost: Cost if your drone hits an obstacle. </p>
+                <p>Discount: How much future rewards matter. Closer to 1 means it plans ahead, closer to 0 means it cares only about immediate rewards.</p>
+                <p>Contrast: Lower value leads to a lighter gradient, higher value leads to a darker gradient.</p>
+                <p>These values influence the drone’s path decisions using the Markov Decision Process. </p>
+                <hr style="border: 0.5px solid lightgray;"/>
+                <p style="text-align: center">For the full details, check out the GitHub <a href="https://github.com/ph4nt0m37x/drone-pathfinder" target="_blank">README</a> for more info! </p>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: end">
+            <a id="infoBtn"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="white "><path d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg></a>
+        </div>
+        <label for="rows">Rows:</label>
+        <input type="number" id="rows" value="25" />
+
+        <label for="cols">Columns:</label>
+        <input type="number" id="cols" value="25" />
+
+        <label for="deliveryReward">Delivery Reward:</label>
+        <input type="number" id="deliveryReward" value="100" />
+
+        <label for="powerCost">Power Cost:</label>
+        <input type="number" id="powerCost" value="10" />
+
+        <label for="repairCost">Drone Repair Cost:</label>
+        <input type="number" id="repairCost" value="500" />
+
+        <label for="discount">Discount (Gamma Value):</label>
+        <input type="number" id="discount" value="0.9" />
+        <label for="contrast">Gradient contrast:</label>
+        <input type="number" id="contrast" value="4">
+        <div style="color: transparent">
+            space
+        </div>
+        <div id="grid-container">
+            <button class="button btn-primary draw-mode" value="empty" onclick="selectMode(this.value)">Clear</button>
+            <button class="button draw-mode" value="obstacle" onclick="selectMode(this.value)">Wall</button>
+
+            <button class="button draw-mode" value="start" onclick="selectMode(this.value)">Start</button>
+            <button class="button draw-mode" value="end" onclick="selectMode(this.value)">Goal
+            </button>
+            <button class="button" id="toggleGrid" onclick="toggleGrid()">
+                Toggle Border
+            </button>
+            <button class="button" id="togglePath" onclick="togglePath()">
+                Generate path
+            </button>
+            <button class="button" id="toggleGradient" onclick="toggleGradient()">
+                Toggle Gradient
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="markovs-decision-process.js"></script>
+<script>
+    const modal = document.getElementById("infoModal");
+    const btn = document.getElementById("infoBtn");
+    const close = document.querySelector(".closeBtn");
+
+    btn.onclick = () => modal.style.display = "block";
+    close.onclick = () => modal.style.display = "none";
+
+    window.onclick = (e) => {
+        if (e.target === modal) modal.style.display = "none";
+    };
+</script>
+</body>
+</html>
