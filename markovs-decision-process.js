@@ -11,14 +11,14 @@ const CELL_VALUES = {
 
 let rows; // number of rows
 let columns; // number of columns
-let deliveryReward; //
-let powerCost;
-let repairCost;
-let discount;
-let contrast;
-let globalValues = [];
+let deliveryReward; // reward received for reaching the goal
+let powerCost; // cost or energy spent by the drone for each move
+let repairCost; // penalty cost if the drone hits a hazard/obstacle
+let discount;  // discount factor (gamma) for future rewards
+let contrast; // controls the brightness/darkness of gradient display
+let globalValues = []; // 2D array storing the value of each cell for the gradient mainly
 
-let grid = []; // the board
+let grid = []; // the main grid
 let start; // starting position
 let goal; // goal position
 let rivals = []; // obstacles are in this array
@@ -125,7 +125,7 @@ function selectMode(mode) { // used mainly to change UI, to see which mode is se
     selectedMode = mode; // set the selected mode from the html
     const drawModeButtons = document.querySelectorAll(".button.draw-mode"); // grabs all the buttons with these classes
 
-    if (selectedMode === CELL_VALUES.EMPTY){
+    if (selectedMode === CELL_VALUES.EMPTY){ // clears the grid
         grid = [];
         rivals = [];
         start = null;
@@ -204,9 +204,6 @@ function clearDuplicated(index, type) {
 function toggleGrid() {
     const gridContainer = document.querySelector(".grid-container");
     const toggleButton = document.getElementById("toggleGrid");
-
-    // log the button to confirm it is being selected correctly
-    console.log(toggleButton);
 
     // toggle the 'selected' class on the button
     toggleButton.classList.toggle("selected");
@@ -345,21 +342,7 @@ function calculateNextMoves(currPosn, values, policies) {
     // update value & policies matrices
     values[currPosn[0]][currPosn[1]] = max_val; // assign max utility to current cell
     policies[currPosn[0]][currPosn[1]] = max_move + 1; // store best move
-    console.log(values)
-}
 
-function printMatrix(matrix) {
-    let maxLength = 8;
-    // Print the matrix with formatted numbers
-    for (let row of matrix) {
-        let rowString = "";
-        for (let val of row) {
-            const formattedVal = val.toFixed(4).padStart(maxLength + 1);
-            rowString += formattedVal + " ";
-        }
-        console.log(rowString);
-    }
-    console.log("\n");
 }
 
 function startGoalHazardPositions() {
@@ -384,12 +367,6 @@ function dronePathPlanner(policies, values) {
     let prev = copyValues(values); // getting a copy to track changes from convergence
 
     startGoalHazardPositions(); // find the start, goal, and hazard (obstacle) positions in the grid
-
-    //values e the gradient
-    //zemax max vrednost, gi delis site vrednosti so maksimalnata vrednost,
-    //so formula mozes da napravis namesto od 0 do 1, od 0 do 255 da bide colors?
-    //i red i green i blue da bidat site ist value, to get gray?
-    //toa mozem u css da go menjam.
 
     values[goal[0]][goal[1]] = deliveryReward; // set the utility of the goal cell to the delivery reward
 
@@ -436,10 +413,6 @@ function testDronePathPlanner() {
     }
 
     let utilityAtStart = dronePathPlanner(policies, values); // run the main path planning function
-
-
-    printMatrix(compressMatrixTo255(values));
-    printMatrix(policies);
 
     colorPath(policies); // mark path on grid
 }
