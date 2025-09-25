@@ -56,7 +56,7 @@ html {
     flex: 1;
     border: 1px solid #000;
     box-sizing: border-box;
-    background-color: #e6e2e2; /* background color for better visibility */
+    background-color: #e6e2e2;
 }
 
 .no-border .cell {
@@ -89,7 +89,7 @@ html {
 }
 
 .modal {
-    display: none; /* Hidden by default */
+    display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -97,7 +97,7 @@ html {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.5); /* dark transparent background */
+    background-color: rgba(0,0,0,0.5);
 }
 
 /* Modal content box */
@@ -114,7 +114,6 @@ html {
 
 }
 
-/* close button */
 .closeBtn {
     float: right;
     font-size: 24px;
@@ -139,10 +138,6 @@ a:active{
 
 a:visited {
 color: #7bb3f0;
-}
-
-a:hover {
-             /* show pointer */
 }
 
 label {
