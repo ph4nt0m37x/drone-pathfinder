@@ -22,6 +22,8 @@ let grid = []; // the main grid
 let start = null; // starting position
 let goal = null; // goal position
 let rivals = []; // obstacles are in this array
+let directions = 4; // linear or diagonal movement
+
 
 let selectedMode = ""; // current drawing mode
 let isMouseDown = false; // tracking if the mouse is pressed
@@ -202,6 +204,8 @@ function toggleGrid() {
 
 function togglePath() {
     const generatedPath = document.getElementById("togglePath");
+    const directionInput = document.querySelector('input[name="directionMode"]:checked');
+    directions = parseInt(directionInput.value);
 
     generatedPath.classList.toggle("selected"); // toggle the selected class for the button
 
@@ -251,6 +255,11 @@ function calculateNextMoves(currPosn, values, policies) {
     let n_range = true;
     let e_range = true;
 
+    let se_range = true;
+    let sw_range = true;
+    let ne_range = true;
+    let nw_range = true;
+
     // checking if moving would go out of bounds
 
     if (currPosn[0] + 1 > rows - 1) {
@@ -265,10 +274,15 @@ function calculateNextMoves(currPosn, values, policies) {
     if (currPosn[1] + 1 > columns - 1) {
         e_range = false;
     }
+
     let s_posn;
     let w_posn;
     let n_posn;
     let e_posn;
+    let sw_posn;
+    let se_posn;
+    let nw_posn;
+    let ne_posn;
 
     // determining actual neighboring positions, if out of bounds, stay in place
 
@@ -294,6 +308,26 @@ function calculateNextMoves(currPosn, values, policies) {
         e_posn = [currPosn[0], currPosn[1] + 1];
     } else {
         e_posn = currPosn;
+    }
+    if (s_range && w_range){
+        sw_posn = [currPosn[0] + 1, currPosn[1] - 1];
+    } else {
+        sw_posn = currPosn;
+    }
+    if (s_range && e_range){
+        se_posn = [currPosn[0] + 1, currPosn[1] + 1];
+    } else {
+        se_posn = currPosn;
+    }
+    if (n_range && w_range){
+        nw_posn = [currPosn[0] - 1, currPosn[1] - 1];
+    } else {
+        nw_posn = currPosn;
+    }
+    if (n_range && e_range){
+        ne_posn = [currPosn[0] - 1, currPosn[1] + 1];
+    } else {
+        ne_posn = currPosn;
     }
 
     // calculate the utility at all neighboring positions
@@ -322,14 +356,50 @@ function calculateNextMoves(currPosn, values, policies) {
         0.15 * (-1 * powerCost + discount * values[n_posn[0]][n_posn[1]]) +
         0.15 * (-1 * powerCost + discount * values[s_posn[0]][s_posn[1]]);
 
+    // diagonal directions
 
-    let moves = [e, n, w, s]; // add all possible 4 moves to a list
-    let max_val = Math.max(...moves);
-    let max_move = moves.indexOf(max_val); // find the direction with the maximum utility
+    let sw =
+        0.7 * (-1 * powerCost + discount * values[sw_posn[0]][sw_posn[1]]) +
+        0.15 * (-1 * powerCost + discount * values[se_posn[0]][se_posn[1]]) +
+        0.15 * (-1 * powerCost + discount * values[nw_posn[0]][nw_posn[1]]);
 
-    // update value & policies matrices
-    values[currPosn[0]][currPosn[1]] = max_val; // assign max utility to current cell
-    policies[currPosn[0]][currPosn[1]] = max_move + 1; // store best move
+    let se =
+        0.7 * (-1 * powerCost + discount * values[se_posn[0]][se_posn[1]]) +
+        0.15 * (-1 * powerCost + discount * values[sw_posn[0]][sw_posn[1]]) +
+        0.15 * (-1 * powerCost + discount * values[ne_posn[0]][ne_posn[1]]);
+
+    let nw =
+        0.7 * (-1 * powerCost + discount * values[nw_posn[0]][nw_posn[1]]) +
+        0.15 * (-1 * powerCost + discount * values[sw_posn[0]][sw_posn[1]]) +
+        0.15 * (-1 * powerCost + discount * values[ne_posn[0]][ne_posn[1]]);
+
+    let ne =
+        0.7 * (-1 * powerCost + discount * values[ne_posn[0]][ne_posn[1]]) +
+        0.15 * (-1 * powerCost + discount * values[nw_posn[0]][nw_posn[1]]) +
+        0.15 * (-1 * powerCost + discount * values[se_posn[0]][se_posn[1]]);
+
+
+    if (directions === 4) {
+        let moves = [e, n, w, s]; // add all possible 4 moves to a list
+        let max_val = Math.max(...moves);
+        let max_move = moves.indexOf(max_val); // find the direction with the maximum utility
+
+        // update value & policies matrices
+        values[currPosn[0]][currPosn[1]] = max_val; // assign max utility to current cell
+        policies[currPosn[0]][currPosn[1]] = max_move + 1; // store best move
+    }
+    else if (directions === 8) {
+        let moves = [e, n, w, s, sw, se, nw, ne];
+        let max_val = Math.max(...moves);
+        let max_move = moves.indexOf(max_val);
+
+        // update value & policies matrices
+        values[currPosn[0]][currPosn[1]] = max_val; // assign max utility to current cell
+        policies[currPosn[0]][currPosn[1]] = max_move + 1; // store best move
+    }
+
+    console.log(policies);
+
 
 }
 
@@ -360,6 +430,7 @@ function dronePathPlanner(policies, values) {
 
     for (let r of rivals) {
         values[r[0]][r[1]] = repairCost * -1; // set the utility of each obstacle to the negative repair cost
+
     }
 
     // loop until the value function converges (values stop changing significantly)
@@ -368,9 +439,11 @@ function dronePathPlanner(policies, values) {
             for (let j = 0; j < columns; j++) {
                 let currPosn = [i, j];
                 // Possible error here
+
                 if ((currPosn[0] !== goal[0] || currPosn[1] !== goal[1]) && !rivals.some((pos) => currPosn[0] === pos[0] && currPosn[1] === pos[1])) {
                     calculateNextMoves(currPosn, values, policies); // calculate the best move, and update utility for cell
                 }
+
             }
         }
         if (converges(prev, values)) {
@@ -439,6 +512,26 @@ function colorPath(policies) {
                 break;
             case 4:
                 currentRow++; // move down
+                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+                break;
+            case 5:
+                currentRow++; //sw
+                currentCol--;
+                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+                break;
+            case 6:
+                currentRow++; //se
+                currentCol++;
+                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+                break;
+            case 7:
+                currentRow--; //nw
+                currentCol--;
+                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+                break;
+            case 8:
+                currentRow--; // ne
+                currentCol++;
                 grid[currentRow][currentCol] = CELL_VALUES.PATH;
                 break;
             default:
@@ -522,8 +615,7 @@ function toggleGradient() { // gave up explaining this
     gradientActive = !gradientActive;
 }
 
-function clearGrid() {
-    // reset model
+function clearGrid() { // clearing the grid fully
     grid = new Array(rows).fill(0).map(() => new Array(columns).fill(CELL_VALUES.EMPTY));
     rivals = [];
     start = null;
