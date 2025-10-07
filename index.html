@@ -23,7 +23,7 @@
                 <p>Discount: How much future rewards matter. Closer to 1 means it plans ahead, closer to 0 means it cares only about immediate rewards.</p>
                 <p>Contrast: Lower value leads to a lighter gradient, higher value leads to a darker gradient.</p>
                 <p>These values influence the drone’s path decisions using the Markov Decision Process. </p>
-                <hr style="border: 0.5px solid lightgray;"/>
+                <hr style="border: 1px solid lightgray;"/>
                 <p style="text-align: center">For the full details, check out the GitHub <a href="https://github.com/ph4nt0m37x/drone-pathfinder" target="_blank">README</a> for more info! </p>
             </div>
         </div>
@@ -49,10 +49,14 @@
         <input type="number" id="discount" value="0.9" />
         <label for="contrast">Gradient contrast:</label>
         <input type="number" id="contrast" value="4">
-        <div style="color: transparent">
-            space
-        </div>
-        <div id="grid-container">
+        <form style="padding: 2px; text-align: center;">
+            <label for="four-directions">4-directional movement</label>
+                <input type="radio" id="four-directions" name="directionMode" value="4" checked>
+            <br>
+            <label for="eight-directions">8-directional movement</label>
+                <input type="radio" id="eight-directions" name="directionMode" value="8">
+        </form>
+        <div>
             <button class="button btn-primary draw-mode" value="empty" onclick="clearGrid()">Clear</button>
             <button class="button draw-mode" value="obstacle" onclick="selectMode(this.value)">Wall</button>
 
