@@ -57,11 +57,11 @@
                 <input type="radio" id="eight-directions" name="directionMode" value="8">
         </form>
         <div>
-            <button class="button btn-primary draw-mode" value="empty" onclick="clearGrid()">Clear</button>
-            <button class="button draw-mode" value="obstacle" onclick="selectMode(this.value)">Wall</button>
+            <button id="clear" class="button btn-primary draw-mode" value="empty" onclick="clearGrid()">Clear</button>
+            <button id="wall" class="button draw-mode" value="obstacle" onclick="selectMode(this.value)">Wall</button>
 
-            <button class="button draw-mode" value="start" onclick="selectMode(this.value)">Start</button>
-            <button class="button draw-mode" value="end" onclick="selectMode(this.value)">Goal
+            <button id="start_btn" class="button draw-mode" value="start" onclick="selectMode(this.value)">Start</button>
+            <button id="goal_btn" class="button draw-mode" value="end" onclick="selectMode(this.value)">Goal
             </button>
             <button class="button" id="toggleGrid" onclick="toggleGrid()">
                 Toggle Border

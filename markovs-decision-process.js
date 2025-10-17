@@ -34,20 +34,20 @@ let lastCompressedValues = []; // store compressed values for toggle
 // event listeners, so that whenever the input changes, we update the existing values, and re-generate the grid
 document.getElementById("rows").addEventListener("input", updateValues);
 document.getElementById("cols").addEventListener("input", updateValues);
-document.getElementById("deliveryReward").addEventListener("input", updateValues);
-document.getElementById("powerCost").addEventListener("input", updateValues);
-document.getElementById("repairCost").addEventListener("input", updateValues);
-document.getElementById("discount").addEventListener("input", updateValues);
-document.getElementById("contrast").addEventListener("input", updateValues);
+// document.getElementById("deliveryReward").addEventListener("input", updateValues);
+// document.getElementById("powerCost").addEventListener("input", updateValues);
+// document.getElementById("repairCost").addEventListener("input", updateValues);
+// document.getElementById("discount").addEventListener("input", updateValues);
+// document.getElementById("contrast").addEventListener("input", updateValues);
 
 // initial grid
 window.onload = function () {
 
     updateValues(); // we update with the existing placeholder values
-    grid[1][1] = CELL_VALUES.START;
-    start = [1,1];// we put a start node
-    grid[rows - 2][columns - 2] = CELL_VALUES.END;
-    goal = [rows - 2][columns - 2]; // we put an end node
+   grid[1][1] = CELL_VALUES.START;
+   start = [1,1];// we put a start node
+   grid[rows - 2][columns - 2] = CELL_VALUES.END;
+   goal = [rows - 2][columns - 2]; // we put an end node
     generateGrid(); // we generate the grid
 };
 
@@ -203,11 +203,13 @@ function toggleGrid() {
 }
 
 function togglePath() {
+    updateValues();
     const generatedPath = document.getElementById("togglePath");
     const directionInput = document.querySelector('input[name="directionMode"]:checked');
     directions = parseInt(directionInput.value);
 
     generatedPath.classList.toggle("selected"); // toggle the selected class for the button
+    selectedMode="";
 
     const pathCells = document.querySelectorAll(".cell.path"); // select all cells with the .path class
     pathCells.forEach((cell) => {
@@ -216,9 +218,37 @@ function togglePath() {
 
     if (generatedPath.classList.contains("selected")) {
         testDronePathPlanner();
+
     }
+    toggleButtons();
 
 }
+
+function toggleButtons() {
+    const input_powerCost = document.getElementById("powerCost");
+    const input_repairCost = document.getElementById("repairCost");
+    const input_deliveryReward = document.getElementById("deliveryReward");
+    const input_discount = document.getElementById("discount");
+    const input_contrast = document.getElementById("contrast");
+    const btn_wall = document.getElementById("wall");
+    const btn_start = document.getElementById("start_btn");
+    const btn_goal = document.getElementById("goal_btn");
+    const radio_four_dir = document.getElementById("four-directions");
+    const radio_eight_dir = document.getElementById("eight-directions");
+
+
+    input_powerCost.disabled = !input_powerCost.disabled;
+    input_repairCost.disabled = !input_repairCost.disabled;
+    input_deliveryReward.disabled = !input_deliveryReward.disabled;
+    input_discount.disabled = !input_discount.disabled;
+    input_contrast.disabled = !input_contrast.disabled;
+    btn_wall.disabled = !btn_wall.disabled;
+    btn_start.disabled = !btn_start.disabled;
+    btn_goal.disabled = !btn_goal.disabled;
+    radio_four_dir.disabled = !radio_four_dir.disabled;
+    radio_eight_dir.disabled = !radio_eight_dir.disabled;
+}
+
 
 function copyValues(values) {
     let new_values = [];
@@ -497,6 +527,7 @@ function colorPath(policies) {
 
     while (policies[currentRow][currentCol] !== 0) {
         // move to the next cell based on the policy
+        console.log(policies[currentRow][currentCol]);
         switch (policies[currentRow][currentCol]) {
             case 1:
                 currentCol++; // move right
@@ -540,11 +571,12 @@ function colorPath(policies) {
         }
         const selector = `.cell[data-row="${currentRow}"][data-col="${currentCol}"]`;
         const cell = gridContainer.querySelector(selector);
-        if (cell && !cell.classList.contains("obstacle")) {
+        if (cell && !cell.classList.contains("obstacle") && !cell.classList.contains("start") && !cell.classList.contains("end")) {
             cell.classList.add("path"); // add the "path" class to the current cell
         }
     }
-    if (grid[currentRow][currentCol] !== CELL_VALUES.OBSTACLE)
+    if (grid[currentRow][currentCol] === CELL_VALUES.END)
+        console.log(grid[currentRow][currentCol].classList);
         grid[currentRow][currentCol] = CELL_VALUES.END; // make sure the last cell is marked as the goal
 
 }
@@ -570,12 +602,17 @@ function compressMatrixTo255(matrix) { // linear compression algorithm for turni
 
 function toggleGradient() { // gave up explaining this
 
+    const btn_togglepath = document.getElementById("togglePath");
+    if (!btn_togglepath.classList.contains("selected")) return;
+
     const toggledGradient = document.getElementById("toggleGradient");
     const gridContainer = document.querySelector(".grid-container");
 
     toggledGradient.classList.toggle("selected"); // toggle the selected class for the button
 
     if (!globalValues || globalValues.length === 0) return;
+
+
 
     // compress globalValues only when turning gradient on
     if (!gradientActive) {
