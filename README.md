@@ -6,6 +6,8 @@ The design process follows Markov's Decision Process, and the optimal path is ca
 
 ## Movement
 The drone can move in four directions (North, South, East, West), or optionally in eight directions (including Northeast, Northwest, Southeast, and Southwest), depending on the user’s choice.
+
+
 Movement is not deterministic: when the drone attempts to fly in a chosen direction, there is a 70% chance it will succeed, and a 30% chance it will drift sideways; 15% to either side of the intended direction.
 If the drone passes over a hazardous cell, it crashes and receives a negative utility equal to the repair cost.
 
