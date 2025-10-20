@@ -1,67 +1,52 @@
-// declaring variables used
+// define variables
 
-const CELL_VALUES = {
-    OBSTACLE: "obstacle",
-    EMPTY: "empty",
-    START: "start",
-    END: "end",
-    PATH: "path",
-    GRADIENT: "gradient",
+let rows, columns, board = [];
+let deliveryReward, powerCost, repairCost, discount;
+let contrast, directions, values = [];
+let startNode, goalNode, rivals = [];
+let isMouseDown, mode, gradientActive = false, lastCompressedValues = [];
+
+document.getElementById("rows").addEventListener("input", update);
+document.getElementById("columns").addEventListener("input", update);
+
+
+function setup() {
+    update();
+    board[1][1] = "start";
+    startNode = [1,1]; // we put a start node
+    board[rows - 2][columns - 2] = "goal";
+    goalNode = [rows - 2][columns - 2]; // we put an end node
+    createBoard(); // we generate the board
+    let gradient = document.getElementById("toggleGradient");
+    gradient.disabled = !gradientActive;
 }
 
-let rows; // number of rows
-let columns; // number of columns
-let deliveryReward; // reward received for reaching the goal
-let powerCost; // cost or energy spent by the drone for each move
-let repairCost; // penalty cost if the drone hits a hazard/obstacle
-let discount;  // discount factor (gamma) for future rewards
-let contrast; // controls the brightness/darkness of gradient display
-let globalValues = []; // 2D array storing the value of each cell for the gradient mainly
+window.onload = setup;
 
-let grid = []; // the main grid
-let start = null; // starting position
-let goal = null; // goal position
-let rivals = []; // obstacles are in this array
-let directions = 4; // linear or diagonal movement
-
-
-let selectedMode = ""; // current drawing mode
-let isMouseDown = false; // tracking if the mouse is pressed
-let gradientActive = false;
-let lastCompressedValues = []; // store compressed values for toggle
-
-
-// event listeners, so that whenever the input changes, we update the existing values, and re-generate the grid
-document.getElementById("rows").addEventListener("input", updateValues);
-document.getElementById("cols").addEventListener("input", updateValues);
-// document.getElementById("deliveryReward").addEventListener("input", updateValues);
-// document.getElementById("powerCost").addEventListener("input", updateValues);
-// document.getElementById("repairCost").addEventListener("input", updateValues);
-// document.getElementById("discount").addEventListener("input", updateValues);
-// document.getElementById("contrast").addEventListener("input", updateValues);
-
-// initial grid
-window.onload = function () {
-
-    updateValues(); // we update with the existing placeholder values
-   grid[1][1] = CELL_VALUES.START;
-   start = [1,1];// we put a start node
-   grid[rows - 2][columns - 2] = CELL_VALUES.END;
-   goal = [rows - 2][columns - 2]; // we put an end node
-    generateGrid(); // we generate the grid
-};
-
-// getting the values from the html
-function updateValues() {
-
+function update() {
     rows = parseInt(document.getElementById("rows").value);
-    columns = parseInt(document.getElementById("cols").value);
+    columns = parseInt(document.getElementById("columns").value);
     deliveryReward = parseFloat(document.getElementById("deliveryReward").value);
     powerCost = parseFloat(document.getElementById("powerCost").value);
     repairCost = parseFloat(document.getElementById("repairCost").value);
     discount = parseFloat(document.getElementById("discount").value);
     contrast = parseInt(document.getElementById("contrast").value);
-    generateGrid();
+    directions = parseInt(document.querySelector('input[name="directionMode"]:checked').value);
+
+    createBoard();
+}
+
+function setupEvents(cell) {
+    cell.addEventListener("mousedown", (event) => {
+        isMouseDown = true;
+        draw(event); // paint start/end/obstacle
+    });
+    cell.addEventListener("mouseup", () => {
+        isMouseDown = false;
+    })
+    cell.addEventListener("mouseover", (event) => {
+        if (isMouseDown)draw(event);
+    })
 }
 
 function indexElement(arr, target) { // used for searching for start/goal nodes
@@ -75,208 +60,165 @@ function indexElement(arr, target) { // used for searching for start/goal nodes
     return null; // if we can't find the node that matches
 }
 
-function generateGrid() { // generates the initial grid
+function createBoard() {
+    //  update();
 
     const gridContainer = document.querySelector(".grid-container");
-    const oldGrid = grid; // we take the old grid, so we can paint cells on it
-    gridContainer.innerHTML = ""; // we clear the old board
+    gridContainer.replaceChildren();
+    const oldBoard = board;
 
-    grid = new Array(rows).fill(0).map(() => new Array(columns).fill(CELL_VALUES.EMPTY)); // change false with some other state of choosing
+    // board = Array.from({ length: rows }, () => {
+    //     return Array(columns).fill("empty");
+    // });
+
+    board = new Array(rows).fill(0).map(() => new Array(columns).fill("empty"));
 
     for (let i = 0; i < rows; i++) {
-
         const row = document.createElement("div");
         row.classList.add("row"); // creating a div with class "row"
-
         for (let j = 0; j < columns; j++) {
-
             const cell = document.createElement("div");
-            cell.classList.add("cell"); // creating a cell, in that row, in that column
+            cell.classList.add("cell");
+            cell.dataset.row = i;
+            cell.dataset.col = j;
 
-            cell.dataset.row = i; // set row index as data attribute
-            cell.dataset.col = j; // set column index as data attribute
+            setupEvents(cell);
 
-            cell.addEventListener("mousedown", (event) => {
-                isMouseDown = true;
-                paintCell(event); // we use this to put down a start node, end node and obstacles.
-            });
-
-            cell.addEventListener("mouseover", (event) => {
-                if (isMouseDown) {
-                    paintCell(event); // this is so that it works with dragging.
-                }
-            });
-
-            if (oldGrid[i] && oldGrid[i][j]) {
-                cell.classList.add(oldGrid[i][j]);
-                grid[i][j] = oldGrid[i][j]; // we preserve the existing cell color if it is available
+            if (oldBoard[i] && oldBoard[i][j]) {
+                cell.classList.add(oldBoard[i][j]);
+                board[i][j] = oldBoard[i][j]; // we preserve the existing cell color if it is available
             }
-            row.appendChild(cell); // we add the column, that is, the "cell" to the row
+
+            row.appendChild(cell);
         }
-        gridContainer.appendChild(row); // we add the row to the grid-container
+        gridContainer.appendChild(row);
     }
 
-    document.addEventListener("mouseup", () => {
-        isMouseDown = false; // when the mouse is released, we reset the isMouseDown bool to false
-    });
+    // removed old grid logic from here, add if needed
 
 }
 
-function selectMode(mode) { // used mainly to change UI, to see which mode is selected by darkening the button
-
-    selectedMode = mode; // set the selected mode from the html
+function selectMode(newmode) { // used mainly to change UI, to see which mode is active by darkening the button
+    mode = newmode; // set the active mode from the html
     const drawModeButtons = document.querySelectorAll(".button.draw-mode"); // grabs all the buttons with these classes
 
     drawModeButtons.forEach((drawModeButton) => {
-        if (drawModeButton.value === selectedMode) {
-            drawModeButton.classList.add("selected"); // adds the selected class used for coloring if selected
-        } else
-        {
-            drawModeButton.classList.remove("selected"); // removes the selected class
-        }
+        if (drawModeButton.value === mode) drawModeButton.classList.add("active"); // adds the active class used for coloring if selected
+        else
+            drawModeButton.classList.remove("active"); // removes the active class
     });
-
 }
 
-function paintCell(event) { // function to paint the cells
+function draw(event) {
 
-    const cell = event.target; // cell that triggered it
-
+    const cell = event.target;
     const row = parseInt(cell.dataset.row);
-    const col = parseInt(cell.dataset.col); // find its location
+    const col = parseInt(cell.dataset.col);
 
-    // toggle cell color based on the mode
-
-    if (selectedMode === CELL_VALUES.OBSTACLE) {
-
-        if (cell.classList.contains(CELL_VALUES.OBSTACLE)) {
-            // if already an obstacle, remove it
-            cell.className = "cell";
-            grid[row][col] = CELL_VALUES.EMPTY;
-        } else {
-            // otherwise, add obstacle
-            cell.className = "cell";
-            cell.classList.add(CELL_VALUES.OBSTACLE);
-            grid[row][col] = CELL_VALUES.OBSTACLE;
+    if (mode === "obstacle") {
+        if (cell.classList.contains("obstacle")) {
+            cell.classList.remove("obstacle");
+            board[row][col] = "empty";
         }
-    }  else if (selectedMode === CELL_VALUES.START) {
-
-        let index = indexElement(grid, CELL_VALUES.START);
-
-        clearDuplicated(index, CELL_VALUES.START);
-
-        cell.className = "cell";
-        cell.classList.add(CELL_VALUES.START); // set new start node so the css can modify it
-        grid[row][col] = CELL_VALUES.START; // update the grid model, so it knows the cell is a start node
-
-    } else if (selectedMode === CELL_VALUES.END) {
-        let index = indexElement(grid, CELL_VALUES.END);
-
-        clearDuplicated(index, CELL_VALUES.END);
-
-        cell.className = "cell";
-        cell.classList.add(CELL_VALUES.END); // set new goal node so the css can modify it
-        grid[row][col] = CELL_VALUES.END; // update the grid model, so it knows the cell is a goal node
-
+        else {
+            cell.classList.add("obstacle");
+            board[row][col] = "obstacle";
+        }
+    } else if (mode === "startNode") {
+        let index = indexElement(board, "start");
+        clearDuplicates(index);
+        cell.classList.add("start");
+        board[row][col] = "start";
+    } else if (mode === "goalNode") {
+        let index = indexElement(board, "goal");
+        clearDuplicates(index);
+        cell.classList.add("goal");
+        board[row][col] = "goal";
     }
 
 }
 
-function clearDuplicated(index, type) {
+function clearDuplicates(index) {
     if (index) {
         const selector = `.cell[data-row="${index["i"]}"][data-col="${index["j"]}"]`;
         const oldCell = document.querySelector(selector);
         oldCell.className = "cell";
-        grid[index["i"]][index["j"]] = CELL_VALUES.EMPTY;
+        board[index["i"]][index["j"]] = "empty";
     }
 }
 
-function toggleGrid() {
-    const gridContainer = document.querySelector(".grid-container");
-    const toggleButton = document.getElementById("toggleGrid");
-
-    // toggle the 'selected' class on the button
-    toggleButton.classList.toggle("selected");
-
-    // toggle the 'no-border' class on the grid container
-    gridContainer.classList.toggle("no-border");
-}
 
 function togglePath() {
-    updateValues();
+
+    update();
+    toggleButtons();
+
     const generatedPath = document.getElementById("togglePath");
-    const directionInput = document.querySelector('input[name="directionMode"]:checked');
-    directions = parseInt(directionInput.value);
 
-    generatedPath.classList.toggle("selected"); // toggle the selected class for the button
-    selectedMode="";
+    generatedPath.classList.toggle("active");
 
-    const pathCells = document.querySelectorAll(".cell.path"); // select all cells with the .path class
-    pathCells.forEach((cell) => {
+    const path = document.querySelectorAll(".cell.path"); // select all cells with the .path class
+    path.forEach((cell) => {
         cell.classList.remove("path"); // remove the .path class from each cell
     });
 
-    if (generatedPath.classList.contains("selected")) {
-        testDronePathPlanner();
-
+    if (generatedPath.classList.contains("active")) {
+        planPath();
+    } else {
+        if (gradientActive) toggleGradient(); // disabling the gradient if it's on and we toggled the path off
     }
-    toggleButtons();
-
 }
 
-function toggleButtons() {
-    const input_powerCost = document.getElementById("powerCost");
-    const input_repairCost = document.getElementById("repairCost");
-    const input_deliveryReward = document.getElementById("deliveryReward");
-    const input_discount = document.getElementById("discount");
-    const input_contrast = document.getElementById("contrast");
-    const btn_wall = document.getElementById("wall");
-    const btn_start = document.getElementById("start_btn");
-    const btn_goal = document.getElementById("goal_btn");
-    const radio_four_dir = document.getElementById("four-directions");
-    const radio_eight_dir = document.getElementById("eight-directions");
+function planPath() {
 
+    let policies = Array.from({ length: rows }, () => Array(columns).fill(0)); // initialize each policy cell to no moves yet
+    values   = Array.from({ length: rows }, () => Array(columns).fill(0)); // initialize each value cell to starting utility
 
-    input_powerCost.disabled = !input_powerCost.disabled;
-    input_repairCost.disabled = !input_repairCost.disabled;
-    input_deliveryReward.disabled = !input_deliveryReward.disabled;
-    input_discount.disabled = !input_discount.disabled;
-    input_contrast.disabled = !input_contrast.disabled;
-    btn_wall.disabled = !btn_wall.disabled;
-    btn_start.disabled = !btn_start.disabled;
-    btn_goal.disabled = !btn_goal.disabled;
-    radio_four_dir.disabled = !radio_four_dir.disabled;
-    radio_eight_dir.disabled = !radio_eight_dir.disabled;
+    computePolicies(values, policies);
+    showPath(policies);
 }
 
+function computePolicies(values, policies) {
 
-function copyValues(values) {
-    let new_values = [];
-    for (let i = 0; i < rows; i++) {
-        new_values[i] = [];
-        for (let j = 0; j < columns; j++) {
-            new_values[i][j] = values[i][j];
+    let prev = copyValues(values); // getting a copy to track changes from convergence
+    mapHazardPositions();
+    values[goalNode[0]][goalNode[1]] = deliveryReward; // set the utility of the goal cell to the delivery reward
+
+    for (let r of rivals) {
+        let i = r[0], j = r[1];
+        values[i][j] = -repairCost; // set the utility of each obstacle to the negative repair cost
+    }
+
+    while (true) { // loop until the value function converges (values stop changing significantly)
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < columns; j++) {
+                let currPosn = [i, j]; // possible error here
+                if ((currPosn[0] !== goalNode[0] || currPosn[1] !== goalNode[1]) && !rivals.some((pos) => currPosn[0] === pos[0] && currPosn[1] === pos[1])) {
+                    calculateNextMoves(currPosn, values, policies); // calculate the best move, and update utility for cell
+                }
+            }
+        }
+        if (converges(prev, values)) {
+            break; // stop looping and return if board converges
+        } else {
+            prev = copyValues(values); // continue looping and keep track of previous values nxn matrix
         }
     }
-    return new_values; // return the newly created copy of the matrix
+    return values[startNode[0]][startNode[1]]; // returns utility values at the start position
 }
 
 
-// checks to see if the previous and current value boards converge by a factor of 0.1%
 function converges(prev, curr, converge_factor = 0.01) {
-
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < columns; j++) {
             if (Math.abs(prev[i][j] - curr[i][j]) > converge_factor) {
                 return false; // if the difference is larger than the convergence threshold, matrices have not converged
-
             }
         }
     }
     return true; // if all the differences are within the threshold, they converged
 }
 
-// calculates the next possible 4 moves and then sets values to the max of that move and policies to the direction of the max move
 function calculateNextMoves(currPosn, values, policies) {
 
     // assume all neighboring positions are in range
@@ -285,25 +227,12 @@ function calculateNextMoves(currPosn, values, policies) {
     let n_range = true;
     let e_range = true;
 
-    let se_range = true;
-    let sw_range = true;
-    let ne_range = true;
-    let nw_range = true;
-
     // checking if moving would go out of bounds
 
-    if (currPosn[0] + 1 > rows - 1) {
-        s_range = false;
-    }
-    if (currPosn[1] - 1 < 0) {
-        w_range = false;
-    }
-    if (currPosn[0] - 1 < 0) {
-        n_range = false;
-    }
-    if (currPosn[1] + 1 > columns - 1) {
-        e_range = false;
-    }
+    if (currPosn[0] + 1 > rows - 1) s_range = false;
+    if (currPosn[1] - 1 < 0) w_range = false;
+    if (currPosn[0] - 1 < 0) n_range = false;
+    if (currPosn[1] + 1 > columns - 1) e_range = false;
 
     let s_posn;
     let w_posn;
@@ -316,55 +245,32 @@ function calculateNextMoves(currPosn, values, policies) {
 
     // determining actual neighboring positions, if out of bounds, stay in place
 
-    if (s_range) {
-        s_posn = [currPosn[0] + 1, currPosn[1]];
-    } else {
-        s_posn = currPosn;
-    }
+    if (s_range) s_posn = [currPosn[0] + 1, currPosn[1]];
+    else s_posn = currPosn;
 
-    if (w_range) {
-        w_posn = [currPosn[0], currPosn[1] - 1];
-    } else {
-        w_posn = currPosn;
-    }
+    if (w_range) w_posn = [currPosn[0], currPosn[1] - 1];
+    else w_posn = currPosn;
 
-    if (n_range) {
-        n_posn = [currPosn[0] - 1, currPosn[1]];
-    } else {
-        n_posn = currPosn;
-    }
+    if (n_range) n_posn = [currPosn[0] - 1, currPosn[1]];
+    else n_posn = currPosn;
 
-    if (e_range) {
-        e_posn = [currPosn[0], currPosn[1] + 1];
-    } else {
-        e_posn = currPosn;
-    }
-    if (s_range && w_range){
-        sw_posn = [currPosn[0] + 1, currPosn[1] - 1];
-    } else {
-        sw_posn = currPosn;
-    }
-    if (s_range && e_range){
-        se_posn = [currPosn[0] + 1, currPosn[1] + 1];
-    } else {
-        se_posn = currPosn;
-    }
-    if (n_range && w_range){
-        nw_posn = [currPosn[0] - 1, currPosn[1] - 1];
-    } else {
-        nw_posn = currPosn;
-    }
-    if (n_range && e_range){
-        ne_posn = [currPosn[0] - 1, currPosn[1] + 1];
-    } else {
-        ne_posn = currPosn;
-    }
+    if (e_range) e_posn = [currPosn[0], currPosn[1] + 1];
+    else e_posn = currPosn;
+
+    if (s_range && w_range) sw_posn = [currPosn[0] + 1, currPosn[1] - 1];
+    else sw_posn = currPosn;
+
+    if (s_range && e_range) se_posn = [currPosn[0] + 1, currPosn[1] + 1];
+    else se_posn = currPosn;
+
+    if (n_range && w_range) nw_posn = [currPosn[0] - 1, currPosn[1] - 1];
+    else nw_posn = currPosn;
+
+    if (n_range && e_range) ne_posn = [currPosn[0] - 1, currPosn[1] + 1];
+    else ne_posn = currPosn;
 
     // calculate the utility at all neighboring positions
     // direction_probability * (-1 * powerCost + (discount * values[next[y]][next[x]]))
-
-    // create southeast, southwest, northeast i northwest
-    // the variables u make, put them in the moves list, make 2 move lists
 
     let s =
         0.7 * (-1 * powerCost + discount * values[s_posn[0]][s_posn[1]]) +
@@ -428,157 +334,102 @@ function calculateNextMoves(currPosn, values, policies) {
         policies[currPosn[0]][currPosn[1]] = max_move + 1; // store best move
     }
 
-    console.log(policies);
-
-
 }
 
-function startGoalHazardPositions() {
+
+function mapHazardPositions() {
     rivals = [];
+    // startNode = null; goalNode = null;
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < columns; j++) {
-            if (grid[i][j] === CELL_VALUES.START) {
-                start = [i, j]; // store the start position
+            if (board[i][j] === "start") {
+                startNode = [i, j]; // store the start position
             }
-            if (grid[i][j] === CELL_VALUES.END) {
-                goal = [i, j]; // store the goal position
+            if (board[i][j] === "goal") {
+                goalNode = [i, j]; // store the goal position
             }
-            if (grid[i][j] === CELL_VALUES.OBSTACLE) {
+            if (board[i][j] === "obstacle") {
                 rivals.push([i, j]); // add an obstacle to the array
             }
         }
     }
 }
 
-function dronePathPlanner(policies, values) {
+function toggleButtons() {
+    const ids = ["powerCost", "repairCost", "deliveryReward", "discount", "contrast", "wall", "start_btn", "goal_btn", "four-directions", "eight-directions", "toggleGradient"];
+    ids.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.disabled = !element.disabled;
+        if (element.disabled && element.classList.contains("active"))
+            element.classList.remove("active");
+    }    );
 
-    let prev = copyValues(values); // getting a copy to track changes from convergence
-
-    startGoalHazardPositions(); // find the start, goal, and hazard (obstacle) positions in the grid
-
-    values[goal[0]][goal[1]] = deliveryReward; // set the utility of the goal cell to the delivery reward
-
-    for (let r of rivals) {
-        values[r[0]][r[1]] = repairCost * -1; // set the utility of each obstacle to the negative repair cost
-
-    }
-
-    // loop until the value function converges (values stop changing significantly)
-    while (true) {
-        for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < columns; j++) {
-                let currPosn = [i, j];
-                // Possible error here
-
-                if ((currPosn[0] !== goal[0] || currPosn[1] !== goal[1]) && !rivals.some((pos) => currPosn[0] === pos[0] && currPosn[1] === pos[1])) {
-                    calculateNextMoves(currPosn, values, policies); // calculate the best move, and update utility for cell
-                }
-
-            }
-        }
-        if (converges(prev, values)) {
-            // stop looping and return if board converges
-            break;
-        } else {
-            // continue looping and keep track of previous values nxn matrix
-            prev = copyValues(values);
-
-        }
-    }
-    return values[start[0]][start[1]]; // returns utility values at the start position
+    selectMode("");
 }
 
-function testDronePathPlanner() {
-    let policies = []; // best moves
-    let values = []; // utilities
 
-    globalValues = values;
+function showPath(policies) {
 
-    for (let i = 0; i < rows; i++) {
-        policies[i] = [];
-        values[i] = [];
-        for (let j = 0; j < columns; j++) {
-            policies[i][j] = 0; // initialize each policy cell to no moves yet
-            values[i][j] = 0; // initialize each value cell to starting utility
-        }
-    }
-
-    let utilityAtStart = dronePathPlanner(policies, values); // run the main path planning function
-
-    colorPath(policies); // mark path on grid
-}
-
-function colorPath(policies) {
-    const gridContainer = document.querySelector(".grid-container"); // getting the grid with all the cells
+    const gridContainer = document.querySelector(".grid-container");
 
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < columns; j++) {
-            if (grid[i][j] === CELL_VALUES.PATH) {
-                grid[i][j] = CELL_VALUES.EMPTY;  // clear all existing paths
+            if (board[i][j] === "path") {
+                board[i][j] = "empty";  // clear all existing paths
                 const oldCell = gridContainer.querySelector(`.cell[data-row="${i}"][data-col="${j}"]`);
                 if (oldCell) oldCell.classList.remove("path");
             }
         }
     }
 
-    // start tracing path
-    let currentRow = start[0];
-    let currentCol = start[1];
-
-    while (policies[currentRow][currentCol] !== 0) {
-        // move to the next cell based on the policy
-        console.log(policies[currentRow][currentCol]);
-        switch (policies[currentRow][currentCol]) {
-            case 1:
-                currentCol++; // move right
-                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+    let currRow = startNode[0], currCol = startNode[1]; // start tracing path
+    let steps = 0;
+    while (policies[currRow] && policies[currRow][currCol] !== 0 && steps < rows*columns) {
+        steps++;
+        switch (policies[currRow][currCol]) {  // move to the next cell based on the policy
+            case 1: // move right
+                currCol++;
                 break;
-            case 2:
-                currentRow--; // move up
-                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+            case 2: // move up
+                currRow--;
                 break;
-            case 3:
-                currentCol--; // move left
-                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+            case 3: // move left
+                currCol--;
                 break;
-            case 4:
-                currentRow++; // move down
-                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+            case 4: // move down
+                currRow++;
                 break;
-            case 5:
-                currentRow++; //sw
-                currentCol--;
-                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+            case 5: // move south-west
+                currRow++; currCol--;
                 break;
-            case 6:
-                currentRow++; //se
-                currentCol++;
-                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+            case 6: // move south-east
+                currRow++; currCol++;
                 break;
-            case 7:
-                currentRow--; //nw
-                currentCol--;
-                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+            case 7: // move north-west
+                currRow--; currCol--;
                 break;
-            case 8:
-                currentRow--; // ne
-                currentCol++;
-                grid[currentRow][currentCol] = CELL_VALUES.PATH;
+            case 8: // move north-east
+                currRow--; currCol++;
                 break;
-            default:
-                // invalid policy
+            default: // invalid policy
                 return null;
         }
-        const selector = `.cell[data-row="${currentRow}"][data-col="${currentCol}"]`;
+        const selector = `.cell[data-row="${currRow}"][data-col="${currCol}"]`;
         const cell = gridContainer.querySelector(selector);
-        if (cell && !cell.classList.contains("obstacle") && !cell.classList.contains("start") && !cell.classList.contains("end")) {
+
+        if (cell && !cell.classList.contains("obstacle") && !cell.classList.contains("start") && !cell.classList.contains("goal")) {
+            board[currRow][currCol] = "path";
             cell.classList.add("path"); // add the "path" class to the current cell
         }
     }
-    if (grid[currentRow][currentCol] === CELL_VALUES.END)
-        console.log(grid[currentRow][currentCol].classList);
-        grid[currentRow][currentCol] = CELL_VALUES.END; // make sure the last cell is marked as the goal
+}
 
+function toggleGrid() {
+    const toggleButton = document.getElementById("toggleGrid");
+    toggleButton.classList.toggle("active"); // button appearance on toggle
+
+    const gridContainer = document.querySelector(".grid-container");
+    gridContainer.classList.toggle("no-border"); // grid visibility
 }
 
 function compressMatrixTo255(matrix) { // linear compression algorithm for turning the negative values instead to values 0-255
@@ -592,7 +443,7 @@ function compressMatrixTo255(matrix) { // linear compression algorithm for turni
         row.map(value => {
             // normalize 0–1
             let norm = (value - min) / (max - min);
-            // apply contrast custom, so it can work nice with big grids and small ones :D
+            // apply contrast custom, so it can work nice with big boards and small ones :D
             norm = Math.pow(norm, contrast);
             // scale to 0–255
             return Math.round(norm * 255);
@@ -600,50 +451,42 @@ function compressMatrixTo255(matrix) { // linear compression algorithm for turni
     );
 }
 
-function toggleGradient() { // gave up explaining this
+function toggleGradient() {
 
-    const btn_togglepath = document.getElementById("togglePath");
-    if (!btn_togglepath.classList.contains("selected")) return;
+    const btn_togglePath = document.getElementById("togglePath");
+    if (!btn_togglePath.classList.contains("active")) return;
 
     const toggledGradient = document.getElementById("toggleGradient");
     const gridContainer = document.querySelector(".grid-container");
 
-    toggledGradient.classList.toggle("selected"); // toggle the selected class for the button
+    toggledGradient.classList.toggle("active"); // toggle the active class for the button
 
-    if (!globalValues || globalValues.length === 0) return;
-
-
+    if (!values || values.length === 0) return;
 
     // compress globalValues only when turning gradient on
-    if (!gradientActive) {
-        lastCompressedValues = compressMatrixTo255(globalValues);
-    }
+    if (!gradientActive) lastCompressedValues = compressMatrixTo255(values);
 
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < columns; j++) {
+
             const cell = gridContainer.querySelector(`.cell[data-row="${i}"][data-col="${j}"]`);
             if (!cell) continue;
 
-            // store original background if not already stored
-            if (!cell.dataset.originalBg) {
+            if (!cell.dataset.originalBg) { // store original background
                 cell.dataset.originalBg = window.getComputedStyle(cell).backgroundColor;
             }
 
+            const preservedClasses = new Set(["start", "goal", "obstacle", "path"]);
+
             if (!gradientActive) {
                 // apply gradient only to empty cells
-                if (!cell.classList.contains("start") &&
-                    !cell.classList.contains("end") &&
-                    !cell.classList.contains("obstacle") &&
-                    !cell.classList.contains("path")) {
+                if (![...preservedClasses].some(cls => cell.classList.contains(cls))) {
                     const value = lastCompressedValues[i][j];
                     cell.style.backgroundColor = `rgb(${value}, ${value}, ${value})`;
                 }
             } else {
                 // restore original background
-                if (!cell.classList.contains("start") &&
-                    !cell.classList.contains("end") &&
-                    !cell.classList.contains("obstacle") &&
-                    !cell.classList.contains("path")) {
+                if (![...preservedClasses].some(cls => cell.classList.contains(cls))) {
                     cell.style.backgroundColor = ""; // let other functions take control
                 }
             }
@@ -652,12 +495,20 @@ function toggleGradient() { // gave up explaining this
     gradientActive = !gradientActive;
 }
 
-function clearGrid() { // clearing the grid fully
-    grid = new Array(rows).fill(0).map(() => new Array(columns).fill(CELL_VALUES.EMPTY));
+function clearBoard() {
+
+    board = new Array(rows).fill(0).map(() => new Array(columns).fill("empty"));
     rivals = [];
-    start = null;
-    goal = null;
-    lastCompressedValues = [];
-    gradientActive = false;
-    generateGrid();   // update UI
+    setup();   // update UI
+}
+
+function copyValues(values){
+    let new_values = [];
+    for (let i = 0; i < rows; i++) {
+        new_values[i] = [];
+        for (let j = 0; j < columns; j++) {
+            new_values[i][j] = values[i][j];
+        }
+    }
+    return new_values; // return the newly created copy of the matrix
 }

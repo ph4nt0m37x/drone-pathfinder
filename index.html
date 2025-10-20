@@ -33,43 +33,42 @@
         <label for="rows">Rows:</label>
         <input type="number" id="rows" value="25" />
 
-        <label for="cols">Columns:</label>
-        <input type="number" id="cols" value="25" />
+        <label for="columns">Columns:</label>
+        <input type="number" id="columns" value="25" />
 
         <label for="deliveryReward">Delivery Reward:</label>
-        <input type="number" id="deliveryReward" value="100" />
+        <input type="number" id="deliveryReward" value="100" title="Reward received for reaching the goal."/>
 
         <label for="powerCost">Power Cost:</label>
-        <input type="number" id="powerCost" value="10" />
+        <input type="number" id="powerCost" value="10" title="Energy the drone spends for each move."/>
 
         <label for="repairCost">Drone Repair Cost:</label>
-        <input type="number" id="repairCost" value="500" />
+        <input type="number" id="repairCost" value="500" title="Penalty if the drone hits an obstacle."/>
 
         <label for="discount">Discount (Gamma Value):</label>
-        <input type="number" id="discount" value="0.9" />
+        <input type="number" id="discount" value="0.9" title="How much future rewards matter: 1 = plans ahead, 0 = cares only about immediate rewards."/>
         <label for="contrast">Gradient contrast:</label>
-        <input type="number" id="contrast" value="4">
+        <input type="number" id="contrast" value="4" title="Adjust gradient darkness: lower = lighter, higher = darker.">
         <form style="padding: 2px; text-align: center;">
-            <label for="four-directions">4-directional movement</label>
+            <label for="four-directions" title="Drone can move North, East, South and West.">4-directional movement</label>
                 <input type="radio" id="four-directions" name="directionMode" value="4" checked>
             <br>
-            <label for="eight-directions">8-directional movement</label>
+            <label for="eight-directions" title="Drone can move diagonally, too. (Northeast, southwest..)">8-directional movement</label>
                 <input type="radio" id="eight-directions" name="directionMode" value="8">
         </form>
         <div>
-            <button id="clear" class="button btn-primary draw-mode" value="empty" onclick="clearGrid()">Clear</button>
-            <button id="wall" class="button draw-mode" value="obstacle" onclick="selectMode(this.value)">Wall</button>
-
-            <button id="start_btn" class="button draw-mode" value="start" onclick="selectMode(this.value)">Start</button>
-            <button id="goal_btn" class="button draw-mode" value="end" onclick="selectMode(this.value)">Goal
+            <button id="clear" class="button btn-primary draw-mode" value="empty" onclick="clearBoard()" title="Clears the whole board.">Clear</button>
+            <button id="wall" class="button draw-mode" value="obstacle" onclick="selectMode(this.value)" title="Click to toggle obstacle placement mode. Clicking on a placed obstacle will erase it.">Wall</button>
+            <button id="start_btn" class="button draw-mode" value="startNode" onclick="selectMode(this.value)" title="Click to place the starting point on the board.">Start</button>
+            <button id="goal_btn" class="button draw-mode" value="goalNode" onclick="selectMode(this.value)" title="Click to place the goal on the board.">Goal
             </button>
-            <button class="button" id="toggleGrid" onclick="toggleGrid()">
+            <button class="button" id="toggleGrid" onclick="toggleGrid()" title="Show or hide the grid borders.">
                 Toggle Border
             </button>
-            <button class="button" id="togglePath" onclick="togglePath()">
+            <button class="button" id="togglePath" onclick="togglePath()" title="Click to generate the path. Turn it off to change positions and/or values before recalculating.">
                 Generate path
             </button>
-            <button class="button" id="toggleGradient" onclick="toggleGradient()">
+            <button class="button" id="toggleGradient" onclick="toggleGradient()" title="Click to toggle a gradient based on contrast. Can only be toggled after generating a path.">
                 Toggle Gradient
             </button>
         </div>
