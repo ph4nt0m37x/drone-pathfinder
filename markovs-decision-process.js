@@ -18,7 +18,7 @@ function setup() {
     goalNode = [rows - 2][columns - 2]; // we put an end node
     createBoard(); // we generate the board
     let gradient = document.getElementById("toggleGradient");
-    gradient.disabled = !gradientActive;
+    gradient.disabled = true;
 }
 
 window.onload = setup;
