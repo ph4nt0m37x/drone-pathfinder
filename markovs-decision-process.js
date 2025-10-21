@@ -32,7 +32,6 @@ function update() {
     discount = parseFloat(document.getElementById("discount").value);
     contrast = parseInt(document.getElementById("contrast").value);
     directions = parseInt(document.querySelector('input[name="directionMode"]:checked').value);
-
     createBoard();
 }
 
@@ -50,7 +49,6 @@ function setupEvents(cell) {
 }
 
 function indexElement(arr, target) { // used for searching for start/goal nodes
-
     for (let i = 0; i < arr.length; i++) {
         for (let j = 0; j < arr[i].length; j++) {
             if (arr[i][j] === target)
@@ -61,16 +59,10 @@ function indexElement(arr, target) { // used for searching for start/goal nodes
 }
 
 function createBoard() {
-    //  update();
 
     const gridContainer = document.querySelector(".grid-container");
     gridContainer.replaceChildren();
     const oldBoard = board;
-
-    // board = Array.from({ length: rows }, () => {
-    //     return Array(columns).fill("empty");
-    // });
-
     board = new Array(rows).fill(0).map(() => new Array(columns).fill("empty"));
 
     for (let i = 0; i < rows; i++) {
@@ -88,18 +80,14 @@ function createBoard() {
                 cell.classList.add(oldBoard[i][j]);
                 board[i][j] = oldBoard[i][j]; // we preserve the existing cell color if it is available
             }
-
             row.appendChild(cell);
         }
         gridContainer.appendChild(row);
     }
-
-    // removed old grid logic from here, add if needed
-
 }
 
-function selectMode(newmode) { // used mainly to change UI, to see which mode is active by darkening the button
-    mode = newmode; // set the active mode from the html
+function selectMode(newMode) { // used mainly to change UI, to see which mode is active by darkening the button
+    mode = newMode; // set the active mode from the html
     const drawModeButtons = document.querySelectorAll(".button.draw-mode"); // grabs all the buttons with these classes
 
     drawModeButtons.forEach((drawModeButton) => {
@@ -151,7 +139,7 @@ function clearDuplicates(index) {
 function togglePath() {
 
     update();
-    toggleButtons();
+    toggleButtons(); // buttons are being turned off so that it doesn't regenerate at every swap of values if path is generated
 
     const generatedPath = document.getElementById("togglePath");
 
@@ -314,7 +302,6 @@ function calculateNextMoves(currPosn, values, policies) {
         0.15 * (-1 * powerCost + discount * values[nw_posn[0]][nw_posn[1]]) +
         0.15 * (-1 * powerCost + discount * values[se_posn[0]][se_posn[1]]);
 
-
     if (directions === 4) {
         let moves = [e, n, w, s]; // add all possible 4 moves to a list
         let max_val = Math.max(...moves);
@@ -333,9 +320,7 @@ function calculateNextMoves(currPosn, values, policies) {
         values[currPosn[0]][currPosn[1]] = max_val; // assign max utility to current cell
         policies[currPosn[0]][currPosn[1]] = max_move + 1; // store best move
     }
-
 }
-
 
 function mapHazardPositions() {
     rivals = [];
@@ -357,14 +342,13 @@ function mapHazardPositions() {
 
 function toggleButtons() {
     const ids = ["powerCost", "repairCost", "deliveryReward", "discount", "contrast", "wall", "start_btn", "goal_btn", "four-directions", "eight-directions", "toggleGradient"];
-    ids.forEach(id => {
+    ids.forEach(id => { // disabling/enabling buttons depending on if 
         const element = document.getElementById(id);
         if (element) element.disabled = !element.disabled;
         if (element.disabled && element.classList.contains("active"))
             element.classList.remove("active");
     }    );
-
-    selectMode("");
+    selectMode(""); // un-selecting the last selected mode after generating a path
 }
 
 
@@ -384,8 +368,9 @@ function showPath(policies) {
 
     let currRow = startNode[0], currCol = startNode[1]; // start tracing path
     let steps = 0;
+
     while (policies[currRow] && policies[currRow][currCol] !== 0 && steps < rows*columns) {
-        steps++;
+        steps++; // safety measure to stop & not go overboard
         switch (policies[currRow][currCol]) {  // move to the next cell based on the policy
             case 1: // move right
                 currCol++;
@@ -437,7 +422,7 @@ function compressMatrixTo255(matrix) { // linear compression algorithm for turni
     const min = Math.min(...flat);
     const max = Math.max(...flat);
 
-    if (min === max) return matrix.map(row => row.map(() => 128));
+    if (min === max) return matrix.map(row => row.map(() => 128)); // 128 cause it looked better than 255, 255 was too light
 
     return matrix.map(row =>
         row.map(value => {
@@ -463,7 +448,7 @@ function toggleGradient() {
 
     if (!values || values.length === 0) return;
 
-    // compress globalValues only when turning gradient on
+    // compress values only when turning gradient on
     if (!gradientActive) lastCompressedValues = compressMatrixTo255(values);
 
     for (let i = 0; i < rows; i++) {
@@ -497,8 +482,10 @@ function toggleGradient() {
 
 function clearBoard() {
 
-    board = new Array(rows).fill(0).map(() => new Array(columns).fill("empty"));
-    rivals = [];
+    const generatedPath = document.getElementById("togglePath");
+    if (generatedPath.classList.contains("active")) togglePath(); // if path is toggled when clearing, we turn it off
+    board = new Array(rows).fill(0).map(() => new Array(columns).fill("empty")); // regenerating the map
+    rivals = []; // resetting rivals array
     setup();   // update UI
 }
 
